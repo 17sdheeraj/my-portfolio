@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Full-Screen Terminal Contact Form</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/jquery.terminal/js/jquery.terminal.min.js"></script>
+    <link href="https://unpkg.com/jquery.terminal/css/jquery.terminal.min.css" rel="stylesheet"/>
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #1a1a1a;
+        }
+        #terminal {
+            height: 100vh;
+            width: 100vw;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .terminal .terminal-output, .terminal .cmd {
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div id="terminal"></div>
+    <script>
+        $(function() {
+            const term = $('#terminal').terminal({
+                contact: function() {
+                    return contactForm(this);
+                },
+                help: function() {
+                    this.echo('[[b;green;]Available Commands:]');
+                    this.echo('- [[b;white;]contact]: Start or resume the contact form.');
+                    this.echo('- [[b;white;]clear]: Clear the terminal screen.');
+                    this.echo('- [[b;white;]reset]: Restart the form from scratch.');
+                    this.echo('- [[b;white;]help]: Show this help message.');
+                    this.echo('\n[[b;green;]Form Tips:]');
+                    this.echo('- Type "cancel" at any prompt to stop.');
+                    this.echo('- For messages, type "." on a new line to finish.');
+                    this.echo('- In summary, use numbers (1-5) to edit, "submit" to send, "cancel" to discard.');
+                },
+                clear: function() {
+                    this.clear();
+                    this.echo(greetingMessage());
+                },
+                reset: function() {
+                    return contactForm(this, true);
+                }
+            }, {
+                greetings: greetingMessage(),
+                prompt: '[[b;green;]Contact> ]',
+                history: true,
+                completion: ['contact', 'help', 'clear', 'reset'],
+                keymap: {
+                    'CTRL+C': function() {
+                        term.echo('[[b;yellow;]Type "cancel" to stop the form or "clear" to reset the screen.]]');
+                        return false;
+                    }
+                }
+            });
+
+            function greetingMessage() {
+                return '[[b;cyan;]Welcome to the Advanced Terminal Contact Form]\nType "contact" to begin or "help" for instructions.';
+            }
+
+            function contactForm(terminal, reset = false) {
+                let formData = reset ? {
+                    firstName: '', lastName: '', email: '', phone: '', message: ''
+                } : (terminal.formData || { firstName: '', lastName: '', email: '', phone: '', message: '' });
+                terminal.formData = formData;
+
+                const fields = ['First Name', 'Last Name', 'Email', 'Phone Number', 'Message'];
+                const hints = ['e.g., Calvin', 'e.g., Smith', 'e.g., calvin@example.com', 'e.g., +1 123-456-7890', 'Type your message here...'];
+
+                function readWithCancel(prompt, step, hint) {
+                    const progress = `[[b;cyan;][${'#'.repeat(step)}${'-'.repeat(5 - step)}] ${step}/5]]`;
+                    return terminal.read(`${progress} [[b;green;]${prompt}] (${hint}): `).then(value => {
+                        if (value.toLowerCase() === 'cancel') throw 'cancelled';
+                        return value.trim();
+                    });
+                }
+
+                function readMessage() {
+                    const progress = `[[b;cyan;][#####] 5/5]]`;
+                    terminal.echo(`${progress} [[b;green;]Enter your message (type "." to finish):]]`);
+                    let lines = [];
+                    function readLine() {
+                        return terminal.read('> ').then(line => {
+                            if (line === '.') return lines.join('\n');
+                            lines.push(line);
+                            return readLine();
+                        });
+                    }
+                    return readLine();
+                }
+
+                function validateInput(key, value) {
+                    if (key === 'firstName' || key === 'lastName') {
+                        if (!/^[a-zA-Z\s]+$/.test(value)) return 'Names can only contain letters and spaces.';
+                        return '';
+                    }
+                    if (key === 'email') {
+                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Invalid email format.';
+                        return '';
+                    }
+                    if (key === 'phone' && value) {
+                        if (!/^\+?\d[\d\s-]{7,14}\d$/.test(value)) return 'Phone number must be in a valid format (e.g., +1 123-456-7890).';
+                        return '';
+                    }
+                    return '';
+                }
+
+                function showSummary() {
+                    terminal.echo('\n[[b;cyan;]=== Form Summary ===]]');
+                    fields.forEach((field, i) => {
+                        const value = formData[Object.keys(formData)[i]] || '(not provided)';
+                        terminal.echo(`${i + 1}. [[b;white;]${field}]: ${value}`);
+                    });
+                    terminal.echo('[[b;cyan;]====================]]');
+                    return terminal.read('[[b;green;]Edit (1-5), "submit", or "cancel": ]]').then(input => {
+                        input = input.toLowerCase();
+                        if (input === 'submit') return submitForm();
+                        if (input === 'cancel') {
+                            terminal.echo('[[b;yellow;]Form discarded.]]');
+                            return;
+                        }
+                        const num = parseInt(input);
+                        if (num >= 1 && num <= 5) return editField(num).then(showSummary);
+                        terminal.echo('[[b;red;]Invalid input. Use 1-5, "submit", or "cancel".]]');
+                        return showSummary();
+                    });
+                }
+
+                function editField(num) {
+                    const field = fields[num - 1];
+                    const key = Object.keys(formData)[num - 1];
+                    terminal.echo(`[[b;white;]Current ${field}]: ${formData[key] || '(not provided)'}`);
+                    if (num === 5) {
+                        return terminal.read('[[b;green;]Type "edit" to change message, or Enter to keep: ]]').then(input => {
+                            if (input.toLowerCase() === 'edit') return readMessage().then(newVal => formData.message = newVal);
+                        });
+                    } else {
+                        return readWithCancel(`New ${field}`, num, hints[num - 1]).then(newVal => {
+                            if (newVal) {
+                                const error = validateInput(key, newVal);
+                                if (error) {
+                                    terminal.echo(`[[b;red;]${error}]]`);
+                                    return editField(num);
+                                }
+                                formData[key] = (num <= 2) ? capitalize(newVal) : newVal;
+                            }
+                        });
+                    }
+                }
+
+                function submitForm() {
+                    const missing = [];
+                    if (!formData.firstName) missing.push('First Name');
+                    if (!formData.lastName) missing.push('Last Name');
+                    if (!formData.email) missing.push('Email');
+                    if (!formData.message) missing.push('Message');
+                    if (missing.length) {
+                        terminal.echo(`[[b;red;]Missing: ${missing.join(', ')}]]`);
+                        return showSummary();
+                    }
+                    terminal.echo('[[b;yellow;]Submitting...]]');
+                    const data = {
+                        access_key: '242d14a1-4130-4a8f-a506-93c09c56137d',
+                        subject: 'Contact Form Submission from Terminal',
+                        name: formData.firstName,
+                        'Last Name': formData.lastName,
+                        email: formData.email,
+                        phone: formData.phone,
+                        message: formData.message
+                    };
+                    return $.ajax({
+                        url: 'https://api.web3forms.com/submit',
+                        method: 'POST',
+                        data: data,
+                        dataType: 'json'
+                    }).then(response => {
+                        if (response.success) {
+                            showThankYou();
+                        } else {
+                            terminal.echo(`[[b;red;]Error: ${response.message || 'Submission failed.'}]]`);
+                            return showSummary();
+                        }
+                    }).catch(() => {
+                        terminal.echo('[[b;red;]Network error. Try again later.]]');
+                        return showSummary();
+                    });
+                }
+
+                function showThankYou() {
+                    terminal.clear();
+                    terminal.echo('[[b;green;]=== Thank You for Contacting Me! ===]]');
+                    terminal.echo('[[b;white;]I will get back to you as soon as possible.]]');
+                    terminal.echo('[[b;white;]Note]: If no reply within 1 week, email me directly at: [[b;cyan;]me@sdheeraj.is-cool.dev]]');
+                    terminal.echo('[[b;green;]===================================]]');
+                    terminal.echo('Type [[b;white;]back] to return to the main screen.');
+                    terminal.set_command_handler(function(command) {
+                        if (command.toLowerCase() === 'back') {
+                            terminal.clear();
+                            terminal.echo(greetingMessage());
+                            terminal.set_command_handler(null);
+                        }
+                    });
+                }
+
+                function capitalize(str) {
+                    return str.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+                }
+
+                function collectInfo() {
+                    terminal.echo('[[b;cyan;]=== Starting Contact Form ===]]');
+                    return readWithCancel('First Name', 1, hints[0]).then(val => {
+                        const error = validateInput('firstName', val);
+                        if (error) { terminal.echo(`[[b;red;]${error}]]`); return collectInfo(); }
+                        formData.firstName = capitalize(val);
+                        return readWithCancel('Last Name', 2, hints[1]);
+                    }).then(val => {
+                        const error = validateInput('lastName', val);
+                        if (error) { terminal.echo(`[[b;red;]${error}]]`); return collectInfo(); }
+                        formData.lastName = capitalize(val);
+                        return readWithCancel('Email', 3, hints[2]);
+                    }).then(val => {
+                        const error = validateInput('email', val);
+                        if (error) { terminal.echo(`[[b;red;]${error}]]`); return collectInfo(); }
+                        formData.email = val;
+                        return readWithCancel('Phone Number (optional)', 4, hints[3]);
+                    }).then(val => {
+                        if (val) {
+                            const error = validateInput('phone', val);
+                            if (error) { terminal.echo(`[[b;red;]${error}]]`); return collectInfo(); }
+                            formData.phone = val;
+                        }
+                        return readMessage().then(msg => {
+                            formData.message = msg;
+                            return showSummary();
+                        });
+                    }).catch(err => {
+                        if (err === 'cancelled') terminal.echo('[[b;yellow;]Form cancelled.]]');
+                    });
+                }
+
+                return collectInfo();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snake</title>
+    <style>
+        body {
+            background: black;
+            color: #00ff00;
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #game-board {
+            font-size: 16px;
+            line-height: 1;
+            white-space: pre;
+        }
+        #restart-button {
+            background: black;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            font-family: monospace;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        #controls {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <pre id="game-board"></pre>
+        <button id="restart-button">Restart</button>
+        <div id="controls">
+            Controls: Arrow keys - Move | 'p' - Pause/Resume | 'q' - Quit | Restart button - Restart game
+        </div>
+    </div>
+
+    <script>
+        const WIDTH = 30;
+        const HEIGHT = 15;
+
+        class SnakeGame {
+            constructor(width, height, onEat, onGameOver) {
+                this.width = width;
+                this.height = height;
+                this.onEat = onEat;
+                this.onGameOver = onGameOver;
+                this.reset();
+            }
+            reset() {
+                this.snake = [{x: 2, y: 0}, {x: 1, y: 0}, {x: 0, y: 0}];
+                this.direction = 'right';
+                this.food = this.randomFoodPosition();
+                this.gameOver = false;
+            }
+            randomFoodPosition() {
+                let x, y;
+                do {
+                    x = Math.floor(Math.random() * this.width);
+                    y = Math.floor(Math.random() * this.height);
+                } while (this.snake.some(({x: sx, y: sy}) => sx === x && sy === y));
+                return {x, y};
+            }
+            move() {
+                if (this.gameOver) return;
+                const head = { ...this.snake[0] };
+                switch (this.direction) {
+                    case 'right': head.x++; break;
+                    case 'left': head.x--; break;
+                    case 'up': head.y--; break;
+                    case 'down': head.y++; break;
+                }
+                if (head.x < 0 || head.x >= this.width || head.y < 0 || head.y >= this.height ||
+                    this.snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+                    this.gameOver = true;
+                    this.onGameOver();
+                    return;
+                }
+                this.snake.unshift(head);
+                if (head.x === this.food.x && head.y === this.food.y) {
+                    this.onEat();
+                    this.food = this.randomFoodPosition();
+                } else {
+                    this.snake.pop();
+                }
+            }
+            setDirection(newDirection) {
+                const opposites = { 'right': 'left', 'left': 'right', 'up': 'down', 'down': 'up' };
+                if (newDirection !== opposites[this.direction]) {
+                    this.direction = newDirection;
+                }
+            }
+            next() {
+                this.move();
+                const matrix = Array.from({ length: this.height }, () => Array(this.width).fill(0));
+                this.snake.forEach(({x, y}, index) => {
+                    matrix[y][x] = index === 0 ? 2 : 1;
+                });
+                matrix[this.food.y][this.food.x] = 3;
+                return matrix;
+            }
+        }
+
+        class Snake {
+            constructor(width, height, { speed = 400, end = () => {}, tick = () => {} } = {}) {
+                this._start_speed = speed;
+                this._width = width;
+                this._height = height;
+                this._tick = tick;
+                this._end = end;
+                this._inc_points = 1;
+                this._emitter = new Emitter(null);
+                this._startPromise = null;
+                this.reset();
+            }
+            emit(key) {
+                this._emitter.emit(key);
+            }
+            stop() {
+                this._stop = true;
+            }
+            reset() {
+                this._level = 1;
+                this._points = 0;
+                this._speed = this._start_speed;
+                this._matrix = Array.from({ length: this._height }, () => Array(this._width).fill(0));
+                this._stop = false;
+                this._paused = false;
+            }
+            start() {
+                this._startPromise = (async () => {
+                    this.reset();
+                    this._game = new SnakeGame(this._width, this._height, this.eat.bind(this), this._end.bind(this));
+                    this._emitter._game = this._game;
+                    this._stop = false;
+                    while (!this._stop && !this._game.gameOver) {
+                        if (!this._paused) {
+                            this._emitter.trigger();
+                            this.next();
+                            this._tick();
+                        }
+                        await new Promise(resolve => setTimeout(resolve, this._speed));
+                    }
+                })();
+                return this._startPromise;
+            }
+            eat() {
+                this._points += this._inc_points;
+                if (this._points % 25 === 0) {
+                    this._level++;
+                    if (this._speed > 100) this._speed -= 50;
+                    else if (this._speed > 50) this._speed -= 10;
+                    else this._inc_points++;
+                }
+            }
+            next() {
+                if (!this._paused) {
+                    this._matrix = this._game.next();
+                }
+            }
+            togglePause() {
+                this._paused = !this._paused;
+            }
+            char(chr) {
+                return chr === 2 ? '@' : chr === 1 ? '#' : chr === 3 ? '*' : ' ';
+            }
+            get points() {
+                return this._points;
+            }
+            get level() {
+                return this._level;
+            }
+            get isGameOver() {
+                return this._game?.gameOver ?? false;
+            }
+            get isPaused() {
+                return this._paused;
+            }
+            status() {
+                return `Score: ${this._points}  Level: ${this._level}  ${this._paused ? 'PAUSED' : ''}`;
+            }
+            render() {
+                return this._matrix.map(row => row.map(c => this.char(c)).join('')).join('\n');
+            }
+        }
+
+        class Emitter {
+            constructor(game) {
+                this._game = game;
+                this._keys = [];
+                this._last = '';
+            }
+            append(key) {
+                this._keys.push(key);
+            }
+            emit(key) {
+                const opposites = { 'up': 'down', 'down': 'up', 'left': 'right', 'right': 'left' };
+                if (key !== opposites[this._last]) this.append(key);
+            }
+            trigger() {
+                if (this._keys.length) {
+                    const dir = this._keys.shift();
+                    this._last = dir;
+                    if (this._game) this._game.setDirection(dir);
+                }
+            }
+        }
+
+        class View {
+            constructor(controller) {
+                this._controller = controller;
+            }
+            render() {
+                const board = this._controller.render();
+                const status = this._controller.status();
+                const frameTop = '+' + '-'.repeat(WIDTH) + '+';
+                const output = [status, frameTop, ...board.split('\n').map(line => '|' + line + '|'), frameTop];
+                if (this._controller.isGameOver) {
+                    const message = ' Game Over ';
+                    this.overlayMessage(output, message);
+                } else if (this._controller.isPaused) {
+                    const message = ' Paused ';
+                    this.overlayMessage(output, message);
+                }
+                return output.join('\n');
+            }
+            overlayMessage(output, message) {
+                const messageLine = '+' + '-'.repeat(message.length) + '+';
+                const text = [messageLine, '|' + message + '|', messageLine];
+                const y = Math.floor((HEIGHT - text.length) / 2) + 1;
+                text.forEach((line, i) => {
+                    const x = Math.floor((WIDTH - line.length) / 2);
+                    const row = output[y + i].split('');
+                    for (let j = 0; j < line.length; j++) row[x + j] = line[j];
+                    output[y + i] = row.join('');
+                });
+            }
+        }
+
+        function init() {
+            const game = new Snake(WIDTH, HEIGHT, {
+                tick: () => document.getElementById('game-board').textContent = view.render(),
+                end: () => document.getElementById('game-board').textContent = view.render()
+            });
+            const view = new View(game);
+            let currentGame = game.start();
+
+            document.getElementById('restart-button').addEventListener('click', () => {
+                game.stop();
+                currentGame.then(() => {
+                    game.reset();
+                    currentGame = game.start();
+                });
+            });
+
+            const dirMapping = {
+                'ArrowUp': 'up',
+                'ArrowDown': 'down',
+                'ArrowLeft': 'left',
+                'ArrowRight': 'right'
+            };
+            window.addEventListener('keydown', ({key}) => {
+                if (key === 'q') {
+                    game.stop();
+                    alert(`Game Ended! Score: ${game.points}`);
+                } else if (key === 'p') {
+                    game.togglePause();
+                } else if (dirMapping[key]) {
+                    game.emit(dirMapping[key]);
+                }
+            });
+        }
+        init();
+    </script>
+</body>
+</html>

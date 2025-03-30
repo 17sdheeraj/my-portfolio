@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            color: #0f0;
+            font-family: monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #game-container {
+            padding: 10px;
+            line-height: 1;
+        }
+        pre {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: 3px;
+        }
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        .controls {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #777;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="game-info">
+            <span id="score">Score: 0</span>
+            <span id="level">Level: 1</span>
+        </div>
+        <pre id="game-board"></pre>
+        <div class="controls">
+            ↑ Rotate | ↓ Drop | ← → Move | Space: Pause | Q: Quit
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/gh/jcubic/ascii-canvas@master/dist/umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/jcubic/static/js/tetris-engine.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const { Canvas, Item } = canvas;
+            const gameBoard = document.getElementById('game-board');
+            const scoreElement = document.getElementById('score');
+            const levelElement = document.getElementById('level');
+
+            class View {
+                constructor(width, height) {
+                    const canvas_width = width * 2 + 4;
+                    this._canvas = new Canvas(canvas_width, height + 4);
+                    this._game_view = new Item('', { x: 1, y: 3 });
+                    const frame = new Item(this.createFrame(canvas_width - 2, height));
+                    this._status = new Item('', { x: 2, y: 1 });
+                    this._canvas.append(frame);
+                    this._canvas.append(this._status);
+                    this._canvas.append(this._game_view);
+                }
+                
+                createFrame(width, height) {
+                    const line = '+' + '-'.repeat(width) + '+';
+                    const empty = '|' + ' '.repeat(width) + '|';
+                    let output = [line];
+                    output = output.concat(Array(height).fill(empty));
+                    output.push(line);
+                    return output.join('\n');
+                }
+                
+                render(state) {
+                    this._game_view.update(this.format(state.body, x => x.val));
+                    this._status.update(`Score: ${state.score} | Level: ${state.level}`);
+                    return this._canvas.toString();
+                }
+                
+                format(array, fn = (x) => x) {
+                    if (array) {
+                        return array.map(line => {
+                            return line.map(x => fn(x) === 0 ? '  ' : '[]').join('');
+                        }).join('\n');
+                    }
+                    return '';
+                }
+            }
+
+            class Tetris {
+                constructor({width, height, speed = 800, level_up = 100 }) {
+                    this._speed = speed;
+                    this._score = 0;
+                    this._level = 1;
+                    const max_speed = 150;
+                    const speed_dec = 50;
+                    let prev_score;
+                    
+                    this._view = new View(width, height);
+                    this._game = new tetris.Engine(
+                        width, 
+                        height,
+                        (state) => {
+                            this._score = calculate_score(state);
+                            if (prev_score !== this._score) {
+                                prev_score = this._score;
+                                const next_level = Math.floor(this._score / level_up) + 1;
+                                if (this._score > 0 && next_level > this._level) {
+                                    ++this._level;
+                                    if (this._speed > max_speed) {
+                                        this._speed -= speed_dec;
+                                    }
+                                }
+                            }
+                            this._update(state);
+                            this._last_state = state;
+                        }
+                    );
+                    
+                    this._game_keys = {
+                        ArrowUp: () => this._game.rotate(),
+                        ArrowDown: () => this._game.moveDown(),
+                        ArrowLeft: () => this._game.moveLeft(),
+                        ArrowRight: () => this._game.moveRight()
+                    };
+                    
+                    this._key_map = {
+                        ' ': () => {
+                            this._run = !this._run;
+                            if (this._run) {
+                                this.run();
+                            } else {
+                                this.stop();
+                            }
+                        },
+                        'q': () => {
+                            this.end();
+                            alert(`Game ended! Final score: ${this._score}`);
+                        }
+                    };
+                }
+                
+                _update(state) {
+                    gameBoard.textContent = this._view.render({...state, score: this._score, level: this._level });
+                    scoreElement.textContent = `Score: ${this._score}`;
+                    levelElement.textContent = `Level: ${this._level}`;
+                }
+                
+                _tick() {
+                    this._game.moveDown();
+                }
+                
+                end() {
+                    this._run = false;
+                }
+                
+                stop() {
+                    this._run = false;
+                }
+                
+                start() {
+                    this._game.start();
+                    this.run();
+                }
+                
+                async run() {
+                    this._run = true;
+                    while (this._run) {
+                        this._tick();
+                        await delay(this._speed);
+                    }
+                }
+            }
+
+            function delay(time) {
+                return new Promise(resolve => {
+                    setTimeout(resolve, time);
+                });
+            }
+
+            function calculate_score(state) {
+                const {
+                    countDoubleLinesReduced: double,
+                    countLinesReduced: total,
+                    countTrippleLinesReduced: tripple,
+                    countQuadrupleLinesReduced: quadruple,
+                    countShapesFalled: shapes
+                } = state.statistic;
+                const normal = total - (quadruple + tripple + double);
+                return shapes + (normal * 5) + (quadruple * 30) + (tripple * 15) + (double * 10);
+            }
+
+            const height = 20;
+            const width = 10;
+            const game = new Tetris({ width, height, speed: 800 });
+
+            window.addEventListener('keydown', (e) => {
+                if (game._game_keys[e.key] && game._run) {
+                    game._game_keys[e.key]();
+                    e.preventDefault();
+                } else if (game._key_map[e.key]) {
+                    game._key_map[e.key]();
+                }
+            });
+
+            game.start();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2048</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: black;
+            color: #00ff00;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        #game {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        #grid {
+            position: relative;
+            margin: 20px auto;
+            background: black;
+            border: 2px solid #00ff00;
+            padding: 10px;
+        }
+
+        .tile {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff00;
+            background: black;
+            border: 1px solid #00ff00;
+            box-sizing: border-box;
+        }
+
+        #controls {
+            margin: 10px 0;
+        }
+
+        button {
+            background: black;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        #game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #00ff00;
+            font-size: 24px;
+            display: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 500px) {
+            .tile {
+                width: 60px;
+                height: 60px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div id="header">
+            <h1>2048</h1>
+            <div id="score">Score: 0</div>
+        </div>
+        <div id="grid"></div>
+        <div id="controls">
+            <button id="restart">Restart</button>
+        </div>
+        <div id="game-over" class="hidden">
+            <h2>Game Over</h2>
+            <button id="restart-game-over">Restart</button>
+        </div>
+    </div>
+    <script>
+        let gridSize = 4;
+        let cellSize = window.innerWidth <= 500 ? 60 : 90;
+        let gap = 10;
+        let grid = [];
+        let score = 0;
+
+        const gridContainer = document.getElementById('grid');
+        const scoreElement = document.getElementById('score');
+        const gameOverElement = document.getElementById('game-over');
+        const restartButton = document.getElementById('restart');
+        const restartGameOverButton = document.getElementById('restart-game-over');
+
+        function initGame() {
+            grid = Array(gridSize).fill().map(() => Array(gridSize).fill(null));
+            gridContainer.style.width = `${gridSize * (cellSize + gap) - gap}px`;
+            gridContainer.style.height = `${gridSize * (cellSize + gap) - gap}px`;
+            score = 0;
+            addNewTile();
+            addNewTile();
+            render();
+            gameOverElement.classList.add('hidden');
+        }
+
+        function addNewTile() {
+            const emptySpots = [];
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (!grid[r][c]) emptySpots.push({ row: r, col: c });
+                }
+            }
+            if (emptySpots.length > 0) {
+                const spot = emptySpots[Math.floor(Math.random() * emptySpots.length)];
+                grid[spot.row][spot.col] = Math.random() < 0.9 ? 2 : 4;
+            }
+        }
+
+        function render() {
+            gridContainer.innerHTML = '';
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    const tile = document.createElement('div');
+                    tile.classList.add('tile');
+                    tile.style.left = `${c * (cellSize + gap)}px`;
+                    tile.style.top = `${r * (cellSize + gap)}px`;
+                    tile.style.width = `${cellSize}px`;
+                    tile.style.height = `${cellSize}px`;
+                    tile.textContent = grid[r][c] || '';
+                    gridContainer.appendChild(tile);
+                }
+            }
+            scoreElement.textContent = `Score: ${score}`;
+        }
+
+        function moveLeft(grid) {
+            const newGrid = grid.map(row => [...row]);
+            let moved = false;
+
+            for (let r = 0; r < gridSize; r++) {
+                const newRow = Array(gridSize).fill(null);
+                let k = 0;
+                for (let c = 0; c < gridSize; c++) {
+                    if (grid[r][c]) {
+                        if (k > 0 && newRow[k - 1] === grid[r][c] && newRow[k - 1] !== null) {
+                            newRow[k - 1] *= 2;
+                            score += newRow[k - 1];
+                            moved = true;
+                        } else {
+                            newRow[k] = grid[r][c];
+                            if (k !== c) moved = true;
+                            k++;
+                        }
+                    }
+                }
+                newGrid[r] = newRow;
+            }
+
+            return { newGrid, moved };
+        }
+
+        function transpose(grid) {
+            return grid[0].map((_, i) => grid.map(row => row[i]));
+        }
+
+        function reverseRows(grid) {
+            return grid.map(row => [...row].reverse());
+        }
+
+        function move(direction) {
+            let result;
+            let tempGrid = grid.map(row => [...row]);
+
+            if (direction === 'left') {
+                result = moveLeft(tempGrid);
+            } else if (direction === 'right') {
+                tempGrid = reverseRows(tempGrid);
+                result = moveLeft(tempGrid);
+                result.newGrid = reverseRows(result.newGrid);
+            } else if (direction === 'up') {
+                tempGrid = transpose(tempGrid);
+                result = moveLeft(tempGrid);
+                result.newGrid = transpose(result.newGrid);
+            } else if (direction === 'down') {
+                tempGrid = transpose(tempGrid);
+                tempGrid = reverseRows(tempGrid);
+                result = moveLeft(tempGrid);
+                result.newGrid = reverseRows(result.newGrid);
+                result.newGrid = transpose(result.newGrid);
+            }
+
+            if (result.moved) {
+                grid = result.newGrid;
+                addNewTile();
+                render();
+                if (checkGameOver()) {
+                    gameOverElement.classList.remove('hidden');
+                }
+            }
+        }
+
+        function checkGameOver() {
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize; c++) {
+                    if (!grid[r][c]) return false;
+                }
+            }
+
+            for (let r = 0; r < gridSize; r++) {
+                for (let c = 0; c < gridSize - 1; c++) {
+                    if (grid[r][c] === grid[r][c + 1]) return false;
+                }
+            }
+            for (let c = 0; c < gridSize; c++) {
+                for (let r = 0; r < gridSize - 1; r++) {
+                    if (grid[r][c] === grid[r + 1][c]) return false;
+                }
+            }
+
+            return true;
+        }
+
+        document.addEventListener('keydown', e => {
+            const moves = {
+                'ArrowLeft': 'left',
+                'ArrowRight': 'right',
+                'ArrowUp': 'up',
+                'ArrowDown': 'down'
+            };
+            if (moves[e.key]) {
+                move(moves[e.key]);
+            }
+        });
+
+        restartButton.addEventListener('click', initGame);
+        restartGameOverButton.addEventListener('click', initGame);
+
+        initGame();
+    </script>
+</body>
+</html>
