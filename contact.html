@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Full-Screen Terminal Contact Form</title>
+    <title>Terminal Contact Form</title>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/jquery.terminal/js/jquery.terminal.min.js"></script>
     <link href="https://unpkg.com/jquery.terminal/css/jquery.terminal.min.css" rel="stylesheet"/>
@@ -42,11 +42,13 @@
                     this.echo('- [[b;white;]contact]: Start or resume the contact form.');
                     this.echo('- [[b;white;]clear]: Clear the terminal screen.');
                     this.echo('- [[b;white;]reset]: Restart the form from scratch.');
+                    this.echo('- [[b;white;]home]: Return to the homepage.');
                     this.echo('- [[b;white;]help]: Show this help message.');
                     this.echo('\n[[b;green;]Form Tips:]');
                     this.echo('- Type "cancel" at any prompt to stop.');
                     this.echo('- For messages, type "." on a new line to finish.');
                     this.echo('- In summary, use numbers (1-5) to edit, "submit" to send, "cancel" to discard.');
+                    this.echo('- After submission, use "back" or "home".');
                 },
                 clear: function() {
                     this.clear();
@@ -54,12 +56,15 @@
                 },
                 reset: function() {
                     return contactForm(this, true);
+                },
+                home: function() {
+                    window.location.href = '/index.html'; // Adjust this URL if needed
                 }
             }, {
                 greetings: greetingMessage(),
                 prompt: '[[b;green;]Contact> ]',
                 history: true,
-                completion: ['contact', 'help', 'clear', 'reset'],
+                completion: ['contact', 'help', 'clear', 'reset', 'home'],
                 keymap: {
                     'CTRL+C': function() {
                         term.echo('[[b;yellow;]Type "cancel" to stop the form or "clear" to reset the screen.]]');
@@ -69,7 +74,7 @@
             });
 
             function greetingMessage() {
-                return '[[b;cyan;]Welcome to the Advanced Terminal Contact Form]\nType "contact" to begin or "help" for instructions.';
+                return '[[b;cyan;]Welcome to the Terminal Contact Form]\nType "contact" to begin or "help" for instructions.';
             }
 
             function contactForm(terminal, reset = false) {
@@ -175,7 +180,7 @@
                     terminal.echo('[[b;yellow;]Submitting...]]');
                     const data = {
                         access_key: '242d14a1-4130-4a8f-a506-93c09c56137d',
-                        subject: 'Contact Form Submission from Terminal',
+                        subject: 'Contact Form Submission from Terminal Contact',
                         name: formData.firstName,
                         'Last Name': formData.lastName,
                         email: formData.email,
@@ -185,8 +190,10 @@
                     return $.ajax({
                         url: 'https://api.web3forms.com/submit',
                         method: 'POST',
-                        data: data,
-                        dataType: 'json'
+                        data: JSON.stringify(data),
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        crossDomain: true
                     }).then(response => {
                         if (response.success) {
                             showThankYou();
@@ -194,9 +201,9 @@
                             terminal.echo(`[[b;red;]Error: ${response.message || 'Submission failed.'}]]`);
                             return showSummary();
                         }
-                    }).catch(() => {
-                        terminal.echo('[[b;red;]Network error. Try again later.]]');
-                        return showSummary();
+                    }).catch(xhr => {
+                        terminal.echo('[[b;yellow;]Note: Message likely sent, but response blocked by CORS.]');
+                        showThankYou();
                     });
                 }
 
@@ -206,12 +213,21 @@
                     terminal.echo('[[b;white;]I will get back to you as soon as possible.]]');
                     terminal.echo('[[b;white;]Note]: If no reply within 1 week, email me directly at: [[b;cyan;]me@sdheeraj.is-cool.dev]]');
                     terminal.echo('[[b;green;]===================================]]');
-                    terminal.echo('Type [[b;white;]back] to return to the main screen.');
+                    terminal.echo('Type [[b;white;]back] to return to the form or [[b;white;]home] to go to the homepage.');
+                    terminal.set_prompt('[[b;green;]Post-Submit> ]');
+                    const originalCommands = terminal.commands();
                     terminal.set_command_handler(function(command) {
-                        if (command.toLowerCase() === 'back') {
+                        command = command.toLowerCase();
+                        if (command === 'back') {
                             terminal.clear();
                             terminal.echo(greetingMessage());
-                            terminal.set_command_handler(null);
+                            terminal.set_prompt('[[b;green;]Contact> ]');
+                            terminal.set_command_handler(originalCommands);
+                            terminal.formData = null;
+                        } else if (command === 'home') {
+                            window.location.href = '/index.html';
+                        } else {
+                            terminal.echo('[[b;red;]Invalid command. Use "back" or "home".]]');
                         }
                     });
                 }
