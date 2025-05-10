@@ -104,19 +104,31 @@ const BASE_URL = 'https://api.sdheeraj.is-cool.dev/api';
 
 async function fetchSlack() {
     try {
-        const res = await fetch(`${BASE_URL}/slack`);
+        const res = await fetch(`${BASE_URL}/slack`, {
+            mode: 'cors',
+            credentials: 'include'
+        });
         const data = await res.json();
-        document.getElementById('presence').textContent = data.presence || 'Unknown';
-        document.getElementById('status').textContent = data.status_text || 'None';
-        document.getElementById('emoji').src = data.display_url || '';
+        const presence = document.getElementById('presence');
+        const status = document.getElementById('status');
+        const emoji = document.getElementById('emoji');
+        
+        if (presence) presence.textContent = data.presence || 'Unknown';
+        if (status) status.textContent = data.status_text || 'None';
+        if (emoji) emoji.src = data.display_url || '';
     } catch (err) {
-        document.getElementById('slack-card').innerHTML = "<div>Error loading Slack data</div>";
+        console.error('Error fetching Slack data:', err);
+        const slackCard = document.getElementById('slack-card');
+        if (slackCard) slackCard.innerHTML = "<div>Error loading Slack data</div>";
     }
 }
 
 async function fetchLastFM() {
     try {
-        const res = await fetch(`${BASE_URL}/lastfm`);
+        const res = await fetch(`${BASE_URL}/lastfm`, {
+            mode: 'cors',
+            credentials: 'include'
+        });
         const data = await res.json();
         const track = data.recenttracks.track[0];
         
@@ -137,10 +149,15 @@ async function fetchLastFM() {
             timeString = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
         }
         
-        document.getElementById('track').textContent = `${track.name} (${timeString} ago)`;
-        document.getElementById('artist').textContent = track.artist['#text'] || 'Unknown';
+        const trackElement = document.getElementById('track');
+        const artistElement = document.getElementById('artist');
+        
+        if (trackElement) trackElement.textContent = `${track.name} (${timeString} ago)`;
+        if (artistElement) artistElement.textContent = track.artist['#text'] || 'Unknown';
     } catch (err) {
-        document.getElementById('lastfm-card').innerHTML = "<div>Error loading Last.fm data</div>";
+        console.error('Error fetching Last.fm data:', err);
+        const lastfmCard = document.getElementById('lastfm-card');
+        if (lastfmCard) lastfmCard.innerHTML = "<div>Error loading Last.fm data</div>";
     }
 }
 
@@ -187,8 +204,8 @@ fetchLastFM();
         const orientation = widthThreshold ? 'vertical' : 'horizontal';
 
         if (
-            (heightThreshold && widthThreshold) ||
-            !((window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) || widthThreshold || heightThreshold)
+            !(heightThreshold && widthThreshold) &&
+            ((window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) || widthThreshold || heightThreshold)
         ) {
             if (!devtools.isOpen || devtools.orientation !== orientation) {
                 emitEvent(true, orientation);
