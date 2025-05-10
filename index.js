@@ -130,29 +130,41 @@ async function fetchLastFM() {
             credentials: 'include'
         });
         const data = await res.json();
+        
+        if (!data.recenttracks || !data.recenttracks.track || !data.recenttracks.track[0]) {
+            console.error('Invalid Last.fm data structure:', data);
+            return;
+        }
+
         const track = data.recenttracks.track[0];
-        
-        const playedTime = new Date(track.date['#text']);
-        const now = new Date();
-        const diffMs = now - playedTime;
-        
-        const hours = Math.floor(diffMs / (1000 * 60 * 60));
-        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const isNowPlaying = track['@attr'] && track['@attr'].nowplaying === 'true';
         
         let timeString = '';
-        if (hours > 0) {
-            timeString += `${hours} hour${hours !== 1 ? 's' : ''}`;
-            if (minutes > 0) {
-                timeString += `, ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+        if (isNowPlaying) {
+            timeString = 'now playing';
+        } else if (track.date && track.date['#text']) {
+            const playedTime = new Date(track.date['#text']);
+            const now = new Date();
+            const diffMs = now - playedTime;
+            
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (hours > 0) {
+                timeString += `${hours} hour${hours !== 1 ? 's' : ''}`;
+                if (minutes > 0) {
+                    timeString += `, ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+                }
+            } else {
+                timeString = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
             }
-        } else {
-            timeString = `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            timeString += ' ago';
         }
         
         const trackElement = document.getElementById('track');
         const artistElement = document.getElementById('artist');
         
-        if (trackElement) trackElement.textContent = `${track.name} (${timeString} ago)`;
+        if (trackElement) trackElement.textContent = `${track.name} (${timeString})`;
         if (artistElement) artistElement.textContent = track.artist['#text'] || 'Unknown';
     } catch (err) {
         console.error('Error fetching Last.fm data:', err);
