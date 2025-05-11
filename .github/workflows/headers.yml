@@ -12,5 +12,12 @@ jobs:
       - uses: actions/checkout@v3
       - name: Set Security Headers
         run: |
-          echo "X-Frame-Options: DENY" >> .nojekyll
-          echo "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; connect-src 'self' https://www.google-analytics.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline';" >> .nojekyll 
+          echo "X-Frame-Options: DENY" > _headers
+          echo "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://www.google-analytics.com https://api.spotify.com https://slack.com https://api.sdheeraj.is-cool.dev; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; frame-ancestors 'none';" >> _headers
+          echo "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload" >> _headers
+          echo "X-Content-Type-Options: nosniff" >> _headers
+          echo "Referrer-Policy: strict-origin-when-cross-origin" >> _headers
+          echo "Permissions-Policy: geolocation=(), microphone=(), camera=()" >> _headers
+          echo "Cross-Origin-Opener-Policy: same-origin" >> _headers
+          echo "Cross-Origin-Embedder-Policy: require-corp" >> _headers
+          echo "Cross-Origin-Resource-Policy: same-origin" >> _headers 
