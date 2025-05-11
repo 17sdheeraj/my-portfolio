@@ -1,0 +1,16 @@
+name: Set Security Headers
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  set-headers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set Security Headers
+        run: |
+          echo "X-Frame-Options: DENY" >> .nojekyll
+          echo "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; connect-src 'self' https://www.google-analytics.com; img-src 'self' data: https:; style-src 'self' 'unsafe-inline';" >> .nojekyll 
