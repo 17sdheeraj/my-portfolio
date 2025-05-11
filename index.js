@@ -116,7 +116,6 @@ async function fetchSlack() {
         if (presence) presence.textContent = data.presence || 'Unknown';
         if (status) status.textContent = data.status_text || 'None';
         
-        // Update emoji based on status
         let statusEmoji = '';
         if (data.huddle_state === 'in_a_huddle') {
             statusEmoji = '🎧';
@@ -127,9 +126,17 @@ async function fetchSlack() {
         }
         
         if (emoji) {
-            if (data.status_emoji_display_info) {
-                emoji.src = data.status_emoji_display_info.display_url || '';
+            if (data.status_emoji_display_info && data.status_emoji_display_info.display_url) {
+                emoji.src = data.status_emoji_display_info.display_url;
+                emoji.style.display = 'inline-block';
+                emoji.style.width = '20px';
+                emoji.style.height = '20px';
+                emoji.style.verticalAlign = 'middle';
             } else {
+                emoji.style.display = 'inline-block';
+                emoji.style.width = '20px';
+                emoji.style.height = '20px';
+                emoji.style.verticalAlign = 'middle';
                 emoji.textContent = statusEmoji;
             }
         }
@@ -163,13 +170,9 @@ async function fetchLastFM() {
         );
 
         if (nowPlaying) {
-            const link = document.createElement('a');
-            link.href = 'https://www.last.fm/user/a-mathiscool';
-            link.textContent = `${nowPlaying.name} by ${
+            trackElement.textContent = `Now playing: ${nowPlaying.name} by ${
                 nowPlaying.artist['#text'].split('; ')[0]
             }`;
-            trackElement.textContent = 'Now playing: ';
-            trackElement.appendChild(link);
         } else {
             const lastTrack = recentTracks[0];
             const date = new Date(lastTrack.date.uts * 1000);
@@ -190,14 +193,9 @@ async function fetchLastFM() {
             }
             durationString += ' ago';
 
-            const link = document.createElement('a');
-            link.href = 'https://www.last.fm/user/a-mathiscool';
-            link.textContent = `${lastTrack.name} by ${
+            trackElement.textContent = `${lastTrack.name} by ${
                 lastTrack.artist['#text'].split('; ')[0]
-            }`;
-            trackElement.textContent = '';
-            trackElement.appendChild(link);
-            trackElement.appendChild(document.createTextNode(` (${durationString})`));
+            } (${durationString})`;
         }
     } catch (err) {
         console.error('Error fetching Last.fm data:', err);
