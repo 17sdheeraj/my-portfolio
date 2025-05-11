@@ -113,32 +113,28 @@ async function fetchSlack() {
         const status = document.getElementById('status');
         const emoji = document.getElementById('emoji');
         
-        if (presence) presence.textContent = data.presence || 'Unknown';
-        if (status) status.textContent = data.status_text || 'None';
-        
-        let statusEmoji = '';
-        if (data.huddle_state === 'in_a_huddle') {
-            statusEmoji = '🎧';
-        } else if (data.presence === 'active') {
-            statusEmoji = '🟢';
-        } else {
-            statusEmoji = '⚪️';
+        if (presence) {
+            let statusEmoji = '';
+            if (data.huddle_state === 'in_a_huddle') {
+                statusEmoji = '🎧';
+            } else if (data.presence === 'active') {
+                statusEmoji = '🟢';
+            } else {
+                statusEmoji = '⚪️';
+            }
+            presence.textContent = statusEmoji;
         }
         
-        if (emoji) {
-            if (data.status_emoji_display_info && data.status_emoji_display_info.display_url) {
-                emoji.src = data.status_emoji_display_info.display_url;
-                emoji.style.display = 'inline-block';
-                emoji.style.width = '20px';
-                emoji.style.height = '20px';
-                emoji.style.verticalAlign = 'middle';
-            } else {
-                emoji.style.display = 'inline-block';
-                emoji.style.width = '20px';
-                emoji.style.height = '20px';
-                emoji.style.verticalAlign = 'middle';
-                emoji.textContent = statusEmoji;
-            }
+        if (status) {
+            status.textContent = data.status_text || 'None';
+        }
+        
+        if (emoji && data.status_emoji_display_info && data.status_emoji_display_info.display_url) {
+            emoji.src = data.status_emoji_display_info.display_url;
+            emoji.style.display = 'inline-block';
+            emoji.style.width = '20px';
+            emoji.style.height = '20px';
+            emoji.style.verticalAlign = 'middle';
         }
     } catch (err) {
         console.error('Error fetching Slack data:', err);
