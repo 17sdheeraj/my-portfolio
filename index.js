@@ -129,8 +129,8 @@ async function fetchSlack() {
             status.textContent = data.status_text || 'None';
         }
         
-        if (emoji && data.status_emoji_display_info && data.status_emoji_display_info.display_url) {
-            emoji.src = data.status_emoji_display_info.display_url;
+        if (emoji && data.status_emoji_display_info && data.status_emoji_display_info[0]?.display_url) {
+            emoji.src = data.status_emoji_display_info[0].display_url;
             emoji.style.display = 'inline-block';
             emoji.style.width = '20px';
             emoji.style.height = '20px';
@@ -344,3 +344,5 @@ function setConsoleState(open) {
 window.addEventListener('devtoolschange', e => {
     setConsoleState(e.detail.isOpen);
 });
+
+setInterval(fetchSlack, 30000);
