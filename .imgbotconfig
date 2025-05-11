@@ -1,0 +1,22 @@
+{
+    "schedule": "monthly",
+    "aggressiveCompression": "true",
+    "compress": {
+        "png": {
+            "quality": 80,
+            "compressionLevel": 9
+        },
+        "jpg": {
+            "quality": 80
+        },
+        "jpeg": {
+            "quality": 80
+        },
+        "gif": {
+            "quality": 80
+        },
+        "ico": {
+            "quality": 80
+        }
+    }
+} 
