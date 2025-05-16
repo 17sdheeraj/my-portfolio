@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Dheeraj's Portfolio - A passionate programmer and white-hat hacker with expertise in Python, JavaScript, and cybersecurity. Explore my projects and skills.">
     <link rel="canonical" href="https://sdheeraj.is-a.dev/">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net https://unpkg.com; connect-src 'self' https://www.google-analytics.com https://api.spotify.com https://slack.com https://api.sdheeraj.is-cool.dev; img-src 'self' data: https:; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdn.jsdelivr.net https://unpkg.com https://webring.hackclub.com; connect-src 'self' https://www.google-analytics.com https://api.spotify.com https://slack.com https://api.sdheeraj.is-cool.dev; img-src 'self' data: https: http://geekring.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com;">
     <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
     <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
     <title>My Portfolio</title>
@@ -395,7 +395,32 @@
         </section>
 
 
-        <div style="margin-bottom: 600px;"></div>   
+        <div style="margin-bottom: 200px;"></div>   
+
+    <!-- Webrings Section -->
+    <div class="webrings-container" style="text-align: center; margin-bottom: 20px;">
+        <h4 style="margin-bottom: 15px; font-size: 1rem; color: #666;">Webrings</h4>
+        <div id="webring-wrapper" style="display: inline-block; margin: 0 10px;">
+            <a href="https://webring.hackclub.com/" id="previousBtn" class="webring-anchor" title="Previous">‹</a>
+            <a href="https://webring.hackclub.com/" class="webring-logo" title="Hack Club Webring" alt="Hack Club Webring"></a>
+            <a href="https://webring.hackclub.com/" id="nextBtn" class="webring-anchor" title="Next">›</a>
+            <script src="https://webring.hackclub.com/embed.min.js"></script>
+        </div>
+
+        <a href="https://webring.xxiivv.com/#sdheeraj" target="_blank" rel="noopener" style="display: inline-block; margin: 0 10px;">
+            <img src="https://webring.xxiivv.com/icon.white.svg" alt="XXIIVV webring" style="height: 20px;"/>
+        </a>
+
+        <div style="display: inline-block; margin: 0 10px;">
+            <map name="badge-geekring">
+                <area shape="rect" coords="4,3,13,28" href="http://geekring.net/site/NUMBER/previous" alt="Previous">
+                <area shape="rect" coords="13,3,22,28" href="http://geekring.net/site/NUMBER/random" alt="Random">
+                <area shape="rect" coords="76,3,84,28" href="http://geekring.net/site/NUMBER/next" alt="Next">
+                <area shape="rect" coords="23,3,63,28" href="https://geekring.net/" alt="Geekring">
+            </map>
+            <img usemap="#badge-geekring" src="http://geekring.net/banner/geek_2.gif" alt="The Geekring" style="height: 20px;">
+        </div>
+    </div>
 
     <!-- Footer Section -->
     <footer class="footer">
