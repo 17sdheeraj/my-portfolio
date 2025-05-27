@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+# This dosen't mean youre allowed to spam scrap my website!
+
+# Sitemap location
+Sitemap: https://sdheeraj.is-a.dev/sitemap.xml

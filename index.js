@@ -126,12 +126,22 @@ async function fetchSlack() {
         }
         
         if (status) {
-            status.textContent = data.status_text || 'None';
+            if (data.status_text && data.status_text.trim() !== '') {
+                status.textContent = data.status_text;
+                status.parentElement.style.display = 'inline';
+                if (emoji) {
+                    emoji.style.display = 'inline-block';
+                }
+            } else {
+                status.parentElement.style.display = 'none';
+                if (emoji) {
+                    emoji.style.display = 'none';
+                }
+            }
         }
         
         if (emoji && data.status_emoji_display_info && data.status_emoji_display_info[0]?.display_url) {
             emoji.src = data.status_emoji_display_info[0].display_url;
-            emoji.style.display = 'inline-block';
             emoji.style.width = '20px';
             emoji.style.height = '20px';
             emoji.style.verticalAlign = 'middle';
