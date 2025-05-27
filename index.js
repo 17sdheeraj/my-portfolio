@@ -354,3 +354,79 @@ window.addEventListener('devtoolschange', e => {
 });
 
 setInterval(fetchSlack, 30000);
+
+// Easter egg :)
+const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+let konamiIndex = 0;
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === konamiCode[konamiIndex]) {
+        konamiIndex++;
+        if (konamiIndex === konamiCode.length) {
+            activateEasterEgg();
+            konamiIndex = 0;
+        }
+    } else {
+        konamiIndex = 0;
+    }
+});
+
+function activateEasterEgg() {
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes retroGlow {
+            0% { text-shadow: 0 0 5px #0f0, 0 0 10px #0f0; }
+            50% { text-shadow: 0 0 10px #0f0, 0 0 20px #0f0; }
+            100% { text-shadow: 0 0 5px #0f0, 0 0 10px #0f0; }
+        }
+        
+        .retro-mode {
+            background-color: #000 !important;
+            color: #0f0 !important;
+            font-family: 'Press Start 2P', cursive !important;
+        }
+        
+        .retro-mode h1, .retro-mode h2, .retro-mode h3 {
+            animation: retroGlow 2s infinite;
+        }
+        
+        .retro-mode .cs {
+            color: #0f0 !important;
+            text-shadow: 0 0 5px #0f0;
+        }
+    `;
+    document.head.appendChild(style);
+
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+
+    document.body.classList.toggle('retro-mode');
+
+    const message = document.createElement('div');
+    message.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: #0f0;
+        padding: 20px;
+        border: 2px solid #0f0;
+        font-family: 'Press Start 2P', cursive;
+        z-index: 1000;
+        text-align: center;
+        animation: retroGlow 2s infinite;
+    `;
+    message.innerHTML = `
+        <h2>SECRET MODE ACTIVATED 👀</h2>
+        <p>You found the secret retro mode!</p>
+        <p>Press the Konami code again to toggle it off.</p>
+    `;
+    document.body.appendChild(message);
+
+    setTimeout(() => {
+        message.remove();
+    }, 5000);
+}
