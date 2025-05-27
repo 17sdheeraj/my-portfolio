@@ -47,6 +47,7 @@ Here's a preview of my portfolio website:
 ## 404 page
 Inspired by a [redditor/developer](https://www.reddit.com/r/terminal_porn/comments/yeyp6j/terminalthemed_404_error_page/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
 ![404inspo](./assets/404inspo.png)
+
 I have added many games,etc which are terminal themed
 
 ## Contributing 🤝
