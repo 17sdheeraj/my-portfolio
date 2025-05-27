@@ -430,3 +430,40 @@ function activateEasterEgg() {
         message.remove();
     }, 5000);
 }
+
+// another easter egg
+let logoClickCount = 0;
+let lastClickTime = 0;
+const CLICK_TIMEOUT = 3000;
+
+document.querySelector('.logo').addEventListener('click', (e) => {
+    const currentTime = new Date().getTime();
+    
+    if (currentTime - lastClickTime > CLICK_TIMEOUT) {
+        logoClickCount = 0;
+    }
+    
+    logoClickCount++;
+    lastClickTime = currentTime;
+
+    if (logoClickCount === 5) {
+        const config = {
+            enableAstroidDestroyer: true
+        };
+        
+        if (config.enableAstroidDestroyer) {
+            const s = document.createElement('script');
+            s.type = 'text/javascript';
+            s.onerror = function(e) {
+                alert('Failed to load the astroid destroyer effect.');
+            };
+            document.body.appendChild(s);
+            s.src = 'https://blog.roysolberg.com/js/dom2.min.js';
+        } else {
+            const astroidCanvas = document.querySelector('canvas[style*="fixed"]');
+            if (astroidCanvas) astroidCanvas.remove();
+        }
+        
+        logoClickCount = 0;
+    }
+});
