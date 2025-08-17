@@ -25,6 +25,7 @@ function remTransBtn(){
     col[0].setAttribute("id", "border");
 }
 
+/* Bot detection code
 const isBot = /bot|crawl|slurp|spider|mediapartners|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|whatsapp|telegram|discord/i.test(navigator.userAgent.toLowerCase());
 
 if (isBot) {
@@ -52,7 +53,9 @@ if (isBot) {
     `;
     throw new Error("Bot detected – stopping execution.");
 }
+*/
 
+/* Mobile detection code
 document.addEventListener("DOMContentLoaded", () => {
     const isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
     const pinkyPromise = localStorage.im_not_on_mobile_i_promise === "true";
@@ -99,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.innerHTML = warningHTML;
     }
 });
+*/
 
 const BASE_URL = 'https://api.sdheeraj.is-cool.dev/api';
 
@@ -372,6 +376,11 @@ document.addEventListener('keydown', (e) => {
 });
 
 function activateEasterEgg() {
+    const fontLink = document.createElement('link');
+    fontLink.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
+    fontLink.rel = 'stylesheet';
+    document.head.appendChild(fontLink);
+
     const style = document.createElement('style');
     style.textContent = `
         @keyframes retroGlow {
@@ -380,27 +389,183 @@ function activateEasterEgg() {
             100% { text-shadow: 0 0 5px #0f0, 0 0 10px #0f0; }
         }
         
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100vh); }
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.9; }
+            5% { opacity: 0.8; }
+            10% { opacity: 0.9; }
+            15% { opacity: 0.85; }
+            20% { opacity: 0.9; }
+            100% { opacity: 0.9; }
+        }
+
+        @keyframes pixelate {
+            0% { filter: none; }
+            50% { filter: pixelate(2px); }
+            100% { filter: none; }
+        }
+        
         .retro-mode {
             background-color: #000 !important;
             color: #0f0 !important;
             font-family: 'Press Start 2P', cursive !important;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+            animation: flicker 0.3s infinite;
+        }
+        
+        .retro-mode .header,
+        .retro-mode .mobile-nav {
+            background-color: rgba(0, 0, 0, 0.9) !important;
+            border-bottom: 2px solid #0f0 !important;
+            z-index: 9998 !important;
+        }
+
+        .retro-mode .navbar a,
+        .retro-mode .mobile-nav a {
+            color: #0f0 !important;
+            text-shadow: 0 0 5px #0f0;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+
+        .retro-mode .navbar a:hover,
+        .retro-mode .mobile-nav a:hover {
+            background-color: #0f0 !important;
+            color: #000 !important;
+            box-shadow: 0 0 10px #0f0;
+        }
+        
+        .retro-mode::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 255, 0, 0.03),
+                rgba(0, 255, 0, 0.03) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 9990;
+        }
+
+        .retro-mode::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 0, 0.5);
+            animation: scanline 4s linear infinite;
+            pointer-events: none;
+            z-index: 9999;
         }
         
         .retro-mode h1, .retro-mode h2, .retro-mode h3 {
             animation: retroGlow 2s infinite;
+            letter-spacing: 2px;
+            margin: 1em 0;
         }
         
-        .retro-mode .cs {
+        .retro-mode .cs, .retro-mode .cs2 {
             color: #0f0 !important;
             text-shadow: 0 0 5px #0f0;
         }
+
+        .retro-mode a {
+            color: #0f0 !important;
+            text-decoration: none;
+            position: relative;
+            padding: 0 5px;
+        }
+
+        .retro-mode a:hover {
+            background-color: #0f0;
+            color: #000 !important;
+        }
+
+        .retro-mode img {
+            filter: sepia(100%) hue-rotate(70deg) saturate(500%);
+            transition: all 0.3s ease;
+        }
+
+        .retro-mode img:hover {
+            transform: scale(1.05);
+            filter: sepia(100%) hue-rotate(70deg) saturate(800%);
+        }
+
+        .retro-mode .btn {
+            border: 2px solid #0f0 !important;
+            background: transparent !important;
+            box-shadow: 0 0 10px #0f0;
+            transition: all 0.3s ease;
+            font-family: 'Press Start 2P', cursive !important;
+            font-size: 0.9em;
+            padding: 15px 25px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .retro-mode .btn:hover {
+            background: #0f0 !important;
+            color: #000 !important;
+            box-shadow: 0 0 20px #0f0;
+            transform: scale(1.05);
+        }
+
+        .retro-mode section {
+            padding: 40px 20px;
+            margin: 20px 0;
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            background: rgba(0, 255, 0, 0.05);
+            box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.1);
+        }
+
+        .retro-mode input,
+        .retro-mode textarea {
+            background: #000 !important;
+            color: #0f0 !important;
+            border: 1px solid #0f0 !important;
+            font-family: 'Press Start 2P', cursive !important;
+            font-size: 0.8em;
+            padding: 10px;
+            margin: 5px 0;
+            box-shadow: 0 0 5px #0f0;
+        }
+
+        .retro-mode input:focus,
+        .retro-mode textarea:focus {
+            outline: none;
+            box-shadow: 0 0 15px #0f0;
+        }
+
+        .retro-mode .mobile-nav-toggle span {
+            background-color: #0f0 !important;
+            box-shadow: 0 0 5px #0f0;
+        }
+
+        .retro-mode .logo img {
+            filter: brightness(0) sepia(100%) hue-rotate(70deg) saturate(500%) !important;
+            transition: all 0.3s ease;
+        }
+
+        .retro-mode .logo img:hover {
+            filter: brightness(0) sepia(100%) hue-rotate(70deg) saturate(800%) !important;
+            transform: scale(1.1) rotate(-5deg);
+        }
     `;
     document.head.appendChild(style);
-
-    const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
 
     document.body.classList.toggle('retro-mode');
 
@@ -410,24 +575,45 @@ function activateEasterEgg() {
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: rgba(0, 0, 0, 0.9);
+        background: rgba(0, 0, 0, 0.98);
         color: #0f0;
-        padding: 20px;
-        border: 2px solid #0f0;
+        padding: 40px;
+        border: 3px double #0f0;
         font-family: 'Press Start 2P', cursive;
-        z-index: 1000;
+        z-index: 10000;
         text-align: center;
         animation: retroGlow 2s infinite;
+        box-shadow: 0 0 30px #0f0;
+        max-width: 90vw;
+        min-width: 320px;
     `;
     message.innerHTML = `
-        <h2>SECRET MODE ACTIVATED 👀</h2>
-        <p>You found the secret retro mode!</p>
-        <p>Press the Konami code again to toggle it off.</p>
+        <h2 style="margin-bottom: 30px; font-size: 1.5em; line-height: 1.4;">SECRET MODE ACTIVATED!</h2>
+        <p style="margin: 20px 0; font-size: 1.2em;">KONAMI CODE ACCEPTED</p>
+        <p style="margin: 20px 0; font-size: 1.2em;">RETRO MODE ENGAGED</p>
+        <p style="margin: 20px 0; font-size: 1em;">Press ↑↑↓↓←→←→BA to toggle</p>
+        <div style="margin-top: 30px; font-size: 2.5em;">👾 🕹️ 🎮</div>
     `;
     document.body.appendChild(message);
 
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.type = 'square';
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.1);
+
     setTimeout(() => {
-        message.remove();
+        message.style.transition = 'all 0.5s ease';
+        message.style.opacity = '0';
+        message.style.transform = 'translate(-50%, -50%) scale(0.8)';
+        setTimeout(() => message.remove(), 500);
     }, 5000);
 }
 
