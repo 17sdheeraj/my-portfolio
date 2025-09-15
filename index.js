@@ -17,6 +17,8 @@ function remTrans(){
     col[0].classList.remove('logo1')
     col[1].classList.remove('logo1')
     col[2].classList.remove('logo1')
+    col[3].classList.remove('logo1')
+    col[4].classList.remove('logo1')
 }
 setTimeout(remTransBtn, 15000);
 function remTransBtn(){
