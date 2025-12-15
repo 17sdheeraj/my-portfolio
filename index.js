@@ -298,7 +298,7 @@ function loadContent(consoleOpen) {
             'glad you found me :)',
             'what you doing inspect elementing in my portfolio site 🤨',
             'if you would like to chat drop in a messge at',
-            'contact@sdheeraj.is-cool.dev'
+            'me@sdheeraj.is-cool.dev'
         ];
         
         messages.forEach(text => {
