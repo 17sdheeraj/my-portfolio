@@ -1,6 +1,5 @@
 const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
-        console.log(entry)
         if (entry.isIntersecting) {
             entry.target.classList.add('show'); 
         } else {
@@ -13,18 +12,16 @@ const hiddenElements = document.querySelectorAll('.hidden');
 hiddenElements.forEach((el) => observer.observe(el));
 setTimeout(remTrans, 5000);
 function remTrans(){
-    col = document.getElementsByClassName('card')
-    col[0].classList.remove('logo1')
-    col[1].classList.remove('logo1')
-    col[2].classList.remove('logo1')
-    col[3].classList.remove('logo1')
-    col[4].classList.remove('logo1')
+    const cards = document.getElementsByClassName('card');
+    Array.from(cards).forEach((card) => card.classList.remove('logo1'));
 }
 setTimeout(remTransBtn, 15000);
 function remTransBtn(){
-    col = document.getElementsByClassName('btn')
-    col[0].classList.remove('four')
-    col[0].setAttribute("id", "border");
+    const buttons = document.getElementsByClassName('btn');
+    if (buttons.length > 0) {
+        buttons[0].classList.remove('four');
+        buttons[0].setAttribute('id', 'border');
+    }
 }
 
 /* Bot detection code
@@ -226,12 +223,7 @@ function updateTime() {
     document.getElementById('time').textContent = now.toLocaleTimeString('en-US', options) + ' IST';
 }
 
-setInterval(updateTime, 1000);
-updateTime();
-fetchSlack();
-setInterval(fetchLastFM, 30000);
-fetchLastFM();
-
+/* DevTools detection code (kept for reference, currently disabled)
 (function () {
     'use strict';
 
@@ -293,18 +285,18 @@ function loadContent(consoleOpen) {
         overlay.innerHTML = '';
         const container = document.createElement('div');
         container.className = 'glitch-container';
-        
+
         const messages = [
             'glad you found me :)',
             'what you doing inspect elementing in my portfolio site 🤨',
             'if you would like to chat drop in a messge at',
             'me@sdheeraj.is-cool.dev'
         ];
-        
+
         messages.forEach(text => {
             container.appendChild(addMessage(text));
         });
-        
+
         overlay.appendChild(container);
     }
 }
@@ -314,7 +306,7 @@ function loadCss(consoleOpen) {
     if (style) {
         style.remove();
     }
-    
+
     if (consoleOpen) {
         const newStyle = document.createElement('style');
         newStyle.id = 'devtools-style';
@@ -358,59 +350,65 @@ function setConsoleState(open) {
 window.addEventListener('devtoolschange', e => {
     setConsoleState(e.detail.isOpen);
 });
+*/
 
+setInterval(updateTime, 1000);
+updateTime();
+fetchSlack();
+setInterval(fetchLastFM, 30000);
+fetchLastFM();
 setInterval(fetchSlack, 30000);
 
 // Easter egg :)
 const konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
 let konamiIndex = 0;
+let lastKonamiKeyTime = 0;
+const RETRO_STYLE_ID = 'retro-mode-style';
+const RETRO_FONT_ID = 'retro-mode-font';
+const RETRO_POPUP_ID = 'retro-mode-popup';
+const RETRO_MODE_STORAGE_KEY = 'portfolio_retro_mode';
+const KONAMI_RESET_TIMEOUT_MS = 2500;
+let retroAudioContext;
 
-document.addEventListener('keydown', (e) => {
-    if (e.key === konamiCode[konamiIndex]) {
-        konamiIndex++;
-        if (konamiIndex === konamiCode.length) {
-            activateEasterEgg();
-            konamiIndex = 0;
-        }
-    } else {
-        konamiIndex = 0;
+function isTypingTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName;
+    return tagName === 'INPUT' || tagName === 'TEXTAREA' || target.isContentEditable;
+}
+
+function ensureRetroAssets() {
+    if (!document.getElementById(RETRO_FONT_ID)) {
+        const fontLink = document.createElement('link');
+        fontLink.id = RETRO_FONT_ID;
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
+        fontLink.rel = 'stylesheet';
+        document.head.appendChild(fontLink);
     }
-});
 
-function activateEasterEgg() {
-    const fontLink = document.createElement('link');
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
-    fontLink.rel = 'stylesheet';
-    document.head.appendChild(fontLink);
+    if (document.getElementById(RETRO_STYLE_ID)) {
+        return;
+    }
 
     const style = document.createElement('style');
+    style.id = RETRO_STYLE_ID;
     style.textContent = `
         @keyframes retroGlow {
             0% { text-shadow: 0 0 5px #0f0, 0 0 10px #0f0; }
             50% { text-shadow: 0 0 10px #0f0, 0 0 20px #0f0; }
             100% { text-shadow: 0 0 5px #0f0, 0 0 10px #0f0; }
         }
-        
+
         @keyframes scanline {
             0% { transform: translateY(0); }
             100% { transform: translateY(100vh); }
         }
 
         @keyframes flicker {
-            0% { opacity: 0.9; }
-            5% { opacity: 0.8; }
-            10% { opacity: 0.9; }
-            15% { opacity: 0.85; }
-            20% { opacity: 0.9; }
-            100% { opacity: 0.9; }
+            0% { opacity: 0.95; }
+            50% { opacity: 0.9; }
+            100% { opacity: 0.95; }
         }
 
-        @keyframes pixelate {
-            0% { filter: none; }
-            50% { filter: pixelate(2px); }
-            100% { filter: none; }
-        }
-        
         .retro-mode {
             background-color: #000 !important;
             color: #0f0 !important;
@@ -418,9 +416,9 @@ function activateEasterEgg() {
             position: relative;
             overflow-x: hidden;
             overflow-y: auto;
-            animation: flicker 0.3s infinite;
+            animation: flicker 0.4s infinite;
         }
-        
+
         .retro-mode .header,
         .retro-mode .mobile-nav {
             background-color: rgba(0, 0, 0, 0.9) !important;
@@ -442,7 +440,7 @@ function activateEasterEgg() {
             color: #000 !important;
             box-shadow: 0 0 10px #0f0;
         }
-        
+
         .retro-mode::before {
             content: '';
             position: fixed;
@@ -473,13 +471,13 @@ function activateEasterEgg() {
             pointer-events: none;
             z-index: 9999;
         }
-        
+
         .retro-mode h1, .retro-mode h2, .retro-mode h3 {
             animation: retroGlow 2s infinite;
             letter-spacing: 2px;
             margin: 1em 0;
         }
-        
+
         .retro-mode .cs, .retro-mode .cs2 {
             color: #0f0 !important;
             text-shadow: 0 0 5px #0f0;
@@ -568,10 +566,42 @@ function activateEasterEgg() {
         }
     `;
     document.head.appendChild(style);
+}
 
-    document.body.classList.toggle('retro-mode');
+function playRetroBeep() {
+    try {
+        if (!retroAudioContext) {
+            retroAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        if (retroAudioContext.state === 'suspended') {
+            retroAudioContext.resume();
+        }
+
+        const oscillator = retroAudioContext.createOscillator();
+        const gainNode = retroAudioContext.createGain();
+
+        oscillator.type = 'square';
+        oscillator.connect(gainNode);
+        gainNode.connect(retroAudioContext.destination);
+
+        oscillator.frequency.setValueAtTime(800, retroAudioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.08, retroAudioContext.currentTime);
+        oscillator.start();
+        oscillator.stop(retroAudioContext.currentTime + 0.1);
+    } catch (err) {
+        console.warn('Retro beep not available:', err);
+    }
+}
+
+function showRetroMessage(isEnabled) {
+    const existingMessage = document.getElementById(RETRO_POPUP_ID);
+    if (existingMessage) {
+        existingMessage.remove();
+    }
 
     const message = document.createElement('div');
+    message.id = RETRO_POPUP_ID;
     message.style.cssText = `
         position: fixed;
         top: 50%;
@@ -589,34 +619,89 @@ function activateEasterEgg() {
         max-width: 90vw;
         min-width: 320px;
     `;
-    message.innerHTML = `
-        <h2 style="margin-bottom: 30px; font-size: 1.5em; line-height: 1.4;">SECRET MODE ACTIVATED!</h2>
+
+    message.innerHTML = isEnabled
+        ? `
+        <h2 style="margin-bottom: 30px; font-size: 1.5em; line-height: 1.4;">RETRO MODE ACTIVATED!</h2>
         <p style="margin: 20px 0; font-size: 1.2em;">KONAMI CODE ACCEPTED</p>
-        <p style="margin: 20px 0; font-size: 1.2em;">RETRO MODE ENGAGED</p>
+        <p style="margin: 20px 0; font-size: 1.2em;">CRT STYLE ENGAGED</p>
         <p style="margin: 20px 0; font-size: 1em;">Press ↑↑↓↓←→←→BA to toggle</p>
         <div style="margin-top: 30px; font-size: 2.5em;">👾 🕹️ 🎮</div>
+    `
+        : `
+        <h2 style="margin-bottom: 30px; font-size: 1.5em; line-height: 1.4;">RETRO MODE DISABLED</h2>
+        <p style="margin: 20px 0; font-size: 1.1em;">Back to normal interface.</p>
     `;
-    document.body.appendChild(message);
 
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.type = 'square';
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.1);
+    document.body.appendChild(message);
 
     setTimeout(() => {
         message.style.transition = 'all 0.5s ease';
         message.style.opacity = '0';
         message.style.transform = 'translate(-50%, -50%) scale(0.8)';
-        setTimeout(() => message.remove(), 500);
-    }, 5000);
+        setTimeout(() => {
+            if (message.parentElement) {
+                message.remove();
+            }
+        }, 500);
+    }, 2500);
+}
+
+function setRetroMode(enabled, options = {}) {
+    const { announce = true, beep = true } = options;
+
+    ensureRetroAssets();
+    document.body.classList.toggle('retro-mode', enabled);
+    localStorage.setItem(RETRO_MODE_STORAGE_KEY, enabled ? '1' : '0');
+
+    if (announce) {
+        showRetroMessage(enabled);
+    }
+
+    if (beep) {
+        playRetroBeep();
+    }
+}
+
+function restoreRetroModeState() {
+    const isEnabled = localStorage.getItem(RETRO_MODE_STORAGE_KEY) === '1';
+    if (isEnabled) {
+        setRetroMode(true, { announce: false, beep: false });
+    }
+}
+
+restoreRetroModeState();
+
+document.addEventListener('keydown', (e) => {
+    if (e.repeat || isTypingTarget(e.target)) {
+        return;
+    }
+
+    const now = Date.now();
+    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+
+    if (now - lastKonamiKeyTime > KONAMI_RESET_TIMEOUT_MS) {
+        konamiIndex = 0;
+    }
+
+    if (key === konamiCode[konamiIndex]) {
+        konamiIndex++;
+        lastKonamiKeyTime = now;
+
+        if (konamiIndex === konamiCode.length) {
+            activateEasterEgg();
+            konamiIndex = 0;
+            lastKonamiKeyTime = 0;
+        }
+    } else {
+        konamiIndex = key === konamiCode[0] ? 1 : 0;
+        lastKonamiKeyTime = now;
+    }
+});
+
+function activateEasterEgg() {
+    const isEnabled = !document.body.classList.contains('retro-mode');
+    setRetroMode(isEnabled);
 }
 
 // another easter egg
@@ -624,34 +709,37 @@ let logoClickCount = 0;
 let lastClickTime = 0;
 const CLICK_TIMEOUT = 3000;
 
-document.querySelector('.logo').addEventListener('click', (e) => {
-    const currentTime = new Date().getTime();
-    
-    if (currentTime - lastClickTime > CLICK_TIMEOUT) {
-        logoClickCount = 0;
-    }
-    
-    logoClickCount++;
-    lastClickTime = currentTime;
+const logoEl = document.querySelector('.logo');
+if (logoEl) {
+    logoEl.addEventListener('click', () => {
+        const currentTime = Date.now();
 
-    if (logoClickCount === 5) {
-        const config = {
-            enableAstroidDestroyer: true
-        };
-        
-        if (config.enableAstroidDestroyer) {
-            const s = document.createElement('script');
-            s.type = 'text/javascript';
-            s.onerror = function(e) {
-                alert('Failed to load the astroid destroyer effect.');
-            };
-            document.body.appendChild(s);
-            s.src = 'https://blog.roysolberg.com/js/dom2.min.js';
-        } else {
-            const astroidCanvas = document.querySelector('canvas[style*="fixed"]');
-            if (astroidCanvas) astroidCanvas.remove();
+        if (currentTime - lastClickTime > CLICK_TIMEOUT) {
+            logoClickCount = 0;
         }
-        
-        logoClickCount = 0;
-    }
-});
+
+        logoClickCount++;
+        lastClickTime = currentTime;
+
+        if (logoClickCount === 5) {
+            const config = {
+                enableAsteroidDestroyer: true
+            };
+
+            if (config.enableAsteroidDestroyer) {
+                const script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.onerror = function() {
+                    alert('Failed to load the asteroid destroyer effect.');
+                };
+                document.body.appendChild(script);
+                script.src = 'https://blog.roysolberg.com/js/dom2.min.js';
+            } else {
+                const asteroidCanvas = document.querySelector('canvas[style*="fixed"]');
+                if (asteroidCanvas) asteroidCanvas.remove();
+            }
+
+            logoClickCount = 0;
+        }
+    });
+}
