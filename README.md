@@ -42,7 +42,7 @@ You can view my live portfolio at:
 
 ## Screenshot 📸
 Here's a preview of my portfolio website:  
-![Screenshot](https://cloud-qmntj2rij-hack-club-bot.vercel.app/0image.png)
+![Screenshot](https://user-cdn.hackclub-assets.com/019c2538-7f51-7cb7-b973-f19c06a8e7fb/image.png)
 
 ## 404 page
 Inspired by a [redditor/developer](https://www.reddit.com/r/terminal_porn/comments/yeyp6j/terminalthemed_404_error_page/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
@@ -56,4 +56,4 @@ If you want to contribute and make improvements, your welcome to fork the reposi
 
 ## Contact
 
-For any queries, reach out to me at contact@sdheeraj.is-cool.dev
+For any queries, reach out to me at contact@sdheeraj.is-a.dev
