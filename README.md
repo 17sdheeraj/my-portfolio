@@ -13,9 +13,6 @@ Welcome to my portfolio website! It's a personal page that showcases all of my d
   - Current time (IST)
   - Slack presence
   - Last.fm now playing
-- Bot detection
-- Mobile detection
-- DevTools detection
 - Terminal-themed 404 page with interactive games
 
 ## Inspiration & Credits
